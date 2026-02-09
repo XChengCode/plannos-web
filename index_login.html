@@ -1,0 +1,211 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Plannos — Sign in</title>
+
+  <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+
+  <style>
+    :root{
+      --bg: #0b1220;
+      --panel: rgba(255,255,255,06);
+      --text: rgba(255,255,255,92);
+      --muted: rgba(255,255,255,65);
+      --border: rgba(255,255,255,12);
+      --shadow: 0 18px 55px rgba(0,0,0,45);
+      --accent: #6ea8fe;
+      --accent2:#8b5cf6;
+      --radius: 18px;
+      --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, "Noto Sans", "Liberation Sans", sans-serif;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family: var(--sans);
+      background:
+        radial-gradient(1200px 800px at 20% 10%, rgba(139,92,246,22), transparent 60%),
+        radial-gradient(1000px 700px at 80% 0%, rgba(110,168,254,18), transparent 55%),
+        radial-gradient(900px 700px at 50% 100%, rgba(34,197,94,10), transparent 55%),
+        var(--bg);
+      color:var(--text);
+      min-height:100vh;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:28px;
+    }
+    .card{
+      width:min(520px, 100%);
+      background: rgba(20,24,38,0.92);  /* 更实一点 */
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 18px;
+      overflow: hidden;
+      box-shadow: 
+        0 30px 80px rgba(0,0,0,0.55);
+        inset 0 1px 0 rgba(255,255,255,0.05)
+      backdrop-filter: blur(16px);
+    }
+    .head{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      padding: 18px 18px;
+
+      /* ✅ 更暗、更克制的顶部渐变 */
+      background: linear-gradient(
+        180deg,
+        rgba(255,255,255,0.04),
+        rgba(255,255,255,0.00)
+      );
+
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+
+      /* 圆角双保险 */
+      border-top-left-radius: 18px;
+      border-top-right-radius: 18px;
+
+    }
+    .logoImg{
+      width:34px;
+      height:34px;
+      border-radius:10px;
+      object-fit: contain;
+      background: rgba(255,255,255,0.9);
+      padding: 4px;
+      border: 1px solid rgba(255,255,255,0.12);
+      box-shadow: 0 8px 20px rgba(0,0,0,0.35);
+    }
+    .head h1{font-size:15px;margin:0}
+    .head p{margin:2px 0 0 0;font-size:12px;color:var(--muted)}
+
+    .body{padding: 18px;}
+    label{display:block; font-size:12px; color:var(--muted); margin: 12px 0 6px;}
+    input{
+      width:100%;
+      border-radius: 12px;
+      border:1px solid rgba(0,0,0,0.15);
+      background: rgba(255,255,255,0.9);   /* ✅ 浅色背景 */
+      color: #111;                          /* ✅ 深色文字 */
+      padding: 12px 12px;
+      font-size: 14px;
+      outline:none;
+    }
+
+    input::placeholder{
+      color: #666;                          /* placeholder 清晰 */
+    }
+
+    input:focus{
+      border-color: #6ea8fe;
+      box-shadow: 0 0 0 2px rgba(110,168,254,0.25);
+    }
+
+    .row{display:flex; gap:10px; margin-top:14px;}
+    button{
+      flex:1;
+      border-radius: 12px;
+      padding: 12px 12px;
+      border:1px solid rgba(0,0,0,0.12);
+      background: linear-gradient(
+        135deg,
+        #6ea8fe,
+        #8b5cf6
+      );
+      color: white;
+      cursor:pointer;
+      font-size: 14px;
+      font-weight: 500;
+    }
+
+    button:hover{
+      opacity: 0.95;
+    }
+
+    button:hover{background: rgba(255,255,255,08);}
+    .hint{margin-top:10px; font-size:12px; color:var(--muted); line-height:1.5;}
+    .err{margin-top:10px; font-size:12px; color:#ffb4b4; display:none;}
+  </style>
+</head>
+
+<body>
+  <div class="card">
+    <div class="head">
+      <img src="logo.png" class="logoImg" alt="Plannos logo" />
+      <div>
+        <h1>Plannos</h1>
+        <p>Sign in to continue</p>
+      </div>
+    </div>
+
+    <div class="body">
+      <div id="error" class="err"></div>
+
+      <label>Email</label>
+      <input id="authEmail" placeholder="you@example.com" autocomplete="email" />
+
+      <label>Password</label>
+      <input id="authPwd" type="password" placeholder="••••••••" autocomplete="current-password" />
+
+      <div class="row">
+        <button id="signInBtn">Sign in</button>
+        <button id="signUpBtn">Sign up</button>
+      </div>
+
+      <div class="hint">
+        Your account will be created instantly. You can sign in right away.
+       
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ===== Supabase =====
+    const SUPABASE_URL = "https://dubfsjioexeiubqwiegt.supabase.co";
+    const SUPABASE_ANON_KEY = "sb_publishable_PFIo7-F7m4KrTYHK8RsA0g_TxZJ4sF3";
+    const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    const authEmail = document.getElementById("authEmail");
+    const authPwd = document.getElementById("authPwd");
+    const signInBtn = document.getElementById("signInBtn");
+    const signUpBtn = document.getElementById("signUpBtn");
+    const errEl = document.getElementById("error");
+
+    function showErr(msg){
+      errEl.textContent = msg;
+      errEl.style.display = msg ? "block" : "none";
+    }
+
+    // ✅ If already signed in, go to chat
+    (async () => {
+      const { data } = await sb.auth.getSession();
+      if (data.session) window.location.href = "./index.html";
+    })();
+
+    signUpBtn.onclick = async () => {
+      showErr("");
+      const email = authEmail.value.trim();
+      const password = authPwd.value;
+      if (!email || !password) return showErr("Please enter email + password.");
+
+      const { error } = await sb.auth.signUp({ email, password });
+      if (error) return showErr(error.message);
+
+      alert("Sign-up successful. If email confirmation is enabled, please check your inbox.");
+    };
+
+    signInBtn.onclick = async () => {
+      showErr("");
+      const email = authEmail.value.trim();
+      const password = authPwd.value;
+      if (!email || !password) return showErr("Please enter email + password.");
+
+      const { error } = await sb.auth.signInWithPassword({ email, password });
+      if (error) return showErr(error.message);
+
+      window.location.href = "./index.html";
+    };
+  </script>
+</body>
+</html>
